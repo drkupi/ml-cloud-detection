@@ -67,7 +67,7 @@ def create_train_validation_test_sets(scene_ids: list, cloud_ratios: dict) -> tu
     """
 
     avg_cloud_ratio = np.asarray(list(cloud_ratios.values())).mean()
-    threshold = 0.3
+    threshold = 0.05
     ratio_check = 0
 
     while ratio_check < 2:
@@ -102,9 +102,11 @@ def create_dataset_from_scene(scene_id: str) -> DataFrame:
     input_file_name = DATA_PATH / f"{scene_id}_data.tif"
     xds = rioxarray.open_rasterio(input_file_name)
     band_names = xds["band"].values
-    df = pd.DataFrame(columns=list(band_names))
+    col_names = [f"Band_{band_name}" for band_name in list(band_names)]
+    df = pd.DataFrame(columns=col_names)
     for band_name in list(band_names):
-        df[band_name] = xds.sel(band=band_name).values.flatten()
+        col_name = f"Band_{band_name}"
+        df[col_name] = xds.sel(band=band_name).values.flatten()
 
     # Step 2 --- Extract pixel labels from PNG file and append to DataFrame
     label_file_name = DATA_PATH / f"{scene_id}_mask.png"
@@ -119,5 +121,6 @@ def create_dataset_from_scene(scene_id: str) -> DataFrame:
     
 
 scene_ids = get_scene_ids()
+df = create_dataset_from_scene(scene_ids[1])
 img_labels, img_binary_labels, cloud_ratios = create_label_data(scene_ids)
 create_train_validation_test_sets(scene_ids, cloud_ratios)
